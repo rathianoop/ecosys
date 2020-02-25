@@ -1,0 +1,457 @@
+<html>
+
+<head>
+  <title>TigerGraph Realtime Customer 360</title>
+  <link rel="stylesheet" type="text/css" href="./gvis/assets/leaflet.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="./date-picker.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+  <script src="./date-picker.js"></script>
+</head>
+
+<body style="padding: 0; margin: 0; background-color: rgba(0, 0, 0, 0.05);">
+  <style>
+    .person-info {
+      font-size: 14px;
+    }
+    .attribute {
+      font-weight: bold;
+    }
+    .section-header {
+      margin-top: 10px;
+    }
+    .selection {
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    .overlay {
+      position: absolute;
+      top: 320px;
+      left: 250px;
+      overflow: hidden;
+    }
+    .overlay-no-hidden {
+      position: absolute;
+      top: 320px;
+      left: 250px;
+    }
+    .vertex {
+      width: 30px;
+      height: 30px;
+      border-radius: 15px;
+      background-color: blue;
+      position: absolute;
+      box-shadow: 0 3px 3px rgba(0, 0, 0, 0.6);
+      background-size: 30px 30px;
+    }
+    .vertex:hover {
+     z-index:555555 !important;
+    }
+    .timeline {
+      width: 2px;
+      background-color: #888;
+      position: absolute;
+      top: 30px;
+    }
+    .timevalue {
+      width: 200px;
+      height: 30px;
+      position: relative;
+      top: -30px;
+      left: -100px;
+      text-align: center;
+    }
+    .section-title {
+      width: 160px;
+      text-align: center;
+      padding-top: 6px;
+    }
+    .free-trial {
+      background-color: rgb(255, 0, 0);
+      background-image: url('./assets/search-icon.png'); 
+    }
+    .developer-edition {
+      background-color: rgb(0, 255, 0);
+      background-image: url('./assets/search-icon.png'); 
+    }
+    .datepicker-container {
+      width: 80px;
+      font-size: 12px;
+    }
+    .tooltiping {
+      padding: 10px;
+      color: #666;
+      border: 1px solid #666;
+      border-radius: 5px;
+      background-color: white;
+      position: absolute;
+      box-shadow: 0 3px 3px rgba(0, 0, 0, 0.6);
+      background-size: 30px 30px;
+      z-index: 11111111;
+    }
+  </style>
+  <!-- Banner -->
+  <div style="height: 150px; background-image: url('./assets/banner-background.png'); background-size: 2700px 150px;
+padding: 5px;">
+    <div style="float: right; width: 230px; margin-right: 50px; margin-top: 50px; display: flex; background: white; border-radius: 4px; overflow: hidden; border: 1px solid #999;">
+      <input style="background: white; border: 0px; color: black; width: 200px; height: 30px;" id="customer-id" class="form-control" placeholder="Customer Lookup" value="songrenchu@gmail.com" />
+      <a href="#" style="background-image: url('./assets/search-icon.png'); background-size: 30px 30px; width: 30px; height: 30px; border-radius: 0;" class="btn btn-primary" onclick="runQuery()"></a>
+    </div>
+  </div>
+
+  <!-- Person information -->
+  <div style="height: 150px; padding: 5px; box-shadow: 0 3px 3px grey; display: flex; background-color: white;">
+    <!-- title & company name -->
+    <div style="margin: 10px 0; padding: 0 10px; width: 350px; border-right: 1px solid #999; display: flex; overflow: hidden;">
+      <div style="background-color: green; width: 80px; height: 80px; border-radius: 40px; background-image: url('./assets/user.png'); background-size: 80px 80px;"></div>
+      <div style="margin-left: 20px;">
+        <h4 id="user-name"></h4>
+        <div class="attribute person-info">Job Title:</div>
+        <div class="person-info" id="job-title"></div>
+        <div class="attribute person-info">Company Name:</div>
+        <div class="person-info" id="company-name"></div>
+      </div>
+    </div>
+
+    <!-- phone & email -->
+    <div style="margin: 10px 0; padding: 0 10px; width: 250px; border-right: 1px solid #999; overflow: hidden;">
+      <div class="attribute person-info">Phone Number:</div>
+      <div class="person-info" id="phone-number"></div>
+      <div class="attribute person-info">Email:</div>
+      <div class="person-info" id="email"></div>
+    </div>
+
+    <!-- address -->
+    <div style="margin: 10px 0; padding: 0 10px; width: 250px; border-right: 1px solid #999; overflow: hidden;">
+      <div class="attribute person-info">Address:</div>
+      <div class="person-info" id="address"></div>
+    </div>
+    
+    <!-- lead source & contact create date -->
+    <div style="margin: 10px 0; padding: 0 10px; width: 250px; overflow: hidden;">
+      <div class="attribute person-info">Lead Source:</div>
+      <div class="person-info" id="lead-source"></div>
+      <div class="attribute person-info">Contact Create Date:</div>
+      <div class="person-info" id="contact-create-date"></div>
+    </div>
+  </div>
+
+  <!-- Main panel -->
+  <div style="height: calc(100vh - 300px); padding: 5px; display: flex;">
+    <!-- Config -->
+    <div style="margin: 10px 0; padding: 0 10px; width: 250px;">
+      <br/>
+      <h5>ACTIVITY</h5>
+      <div id="campaign-selector">
+        
+      </div>
+      
+      <br/>
+      <h5>TIMELINE</h5>
+      <div class="selection">
+        <input id="d1" type="radio" name="timerange" onchange="runQuery()" value="1"> Last 1 Day
+      </div>
+      <div class="selection">
+        <input id="d7" type="radio" name="timerange" onchange="runQuery()" value="7"> Last 7 Days
+      </div>
+      <div class="selection">
+        <input id="d30" type="radio" name="timerange" onchange="runQuery()" value="30"> Last 30 Days
+      </div>
+      <div class="selection">
+        <input id="d90" type="radio" name="timerange" onchange="runQuery()" value="90"> Last 90 Days
+      </div>
+      <div class="selection">
+        <input id="d365" type="radio" name="timerange" onchange="runQuery()" value="365"> Last 1 Year
+      </div>
+      <div class="selection">
+        <input id="dc" type="radio" name="timerange" onchange="updateCustomTimePicker()" value="custom" checked> Custom
+      </div>
+      <div class="selection">
+        <input id="startDate" class="datepicker datepicker-container" data-date-format="yyyy-mm-dd" value="2018-06-01">
+        To
+        <input id="endDate" class="datepicker datepicker-container" data-date-format="yyyy-mm-dd" value="2018-10-01">
+        <button id="dateTimeDoSearch" href="#" style="background-image: url('./assets/search-icon.png'); background-size: 25px 25px; width: 25px; height: 25px; border-radius: 10px;" class="btn btn-primary" onclick="runQuery()"></button>
+        <script>
+          $('.datepicker').datepicker({});
+        </script>
+      </div>
+    </div>
+
+    <div style="margin: 10px 0; width: calc(100vw - 280px); overflow: hidden; overflow-x: hidden; overflow-y: hidden;">
+      <div style="width: calc(100vw - 280px); height: 420px;">
+        <div id="sequence-background" style="width: calc(100vw - 280px); height: 420px;" class="overlay">
+        </div>
+        <div id="timerange-layer" style="width: calc(100vw - 280px); height: 420px;" class="overlay">    
+        </div>
+        <div id="events-layer" style="width: calc(100vw - 280px); height: 420px;" class="overlay">
+        </div>
+        <div id="tooltip-layer" class="overlay-no-hidden" style="width: 0; height: 0; overflow: none;">
+          <div class="tooltiping" id="vertexTooltip">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+<script>
+  var token = "5g1o2a7lnvucb7lbjftelpr2cnj1ulh3";
+  var campaignTypes = [];
+
+  $.ajax({
+    type: 'GET',
+    url: 'query/MyGraph/AllCompaigns',
+    headers: {
+      'Authorization' : `Bearer ${token}`
+    }
+  }).done(function(data) {
+    campaignTypes = data.results[0]['Campaigns'].map(c => c.v_id);
+    renderSequenceBackground(campaignTypes);
+
+    // Campaign type selection.
+    var html = "";
+    campaignTypes.forEach((cType, index) => {
+      var color = sequenceColors[index % sequenceColors.length];
+      html += `<div class="selection">
+          <input type="checkbox" id="ctype_${index}" value="${cType}" onchange="runQuery()" checked> ${cType}
+        </div>`;
+    });
+    $('#campaign-selector').html(html);
+  });
+
+  var sequenceColors = [
+    [220, 104, 107],
+    [235, 149, 98],
+    [243, 200, 115],
+    [160, 194, 151],
+    [111, 171, 172],
+    [111, 151, 198],
+    [188, 150, 193],
+    [162, 122, 105],
+    [168, 173, 185],
+  ];
+  var sequenceIcons = [
+    './assets/social.png',
+    './assets/event.png',
+    './assets/search.png',
+    './assets/website.png',
+    './assets/free.png',
+    './assets/guru.png',
+    './assets/meeting.png',
+    './assets/leadership.png',
+    './assets/other.png',
+  ];
+
+  // Update custom date picker to be enabled/disabled.
+  function updateCustomTimePicker() {
+    $('#startDate').prop('disabled', !$('#dc').prop('checked'));
+    $('#endDate').prop('disabled', !$('#dc').prop('checked'));
+    $('#dateTimeDoSearch').prop('disabled', !$('#dc').prop('checked'));
+  }
+
+  // Render sequence background based on which ones are selected.
+  function renderSequenceBackground(chosenTypes) {
+    console.log(chosenTypes);
+    var html = `
+        <!-- placeholder -->
+        <div style="height: 30px;"></div>
+    `;
+    campaignTypes.forEach((cType, index) => {
+      if (!chosenTypes.includes(cType)) {
+        return;
+      }
+      var color = sequenceColors[index % sequenceColors.length];
+      html += `<div style="height: 50px; margin-top: 5px; display: flex;">
+            <div class="section-title" style="font-size: 12px; background-color: rgb(${color[0]}, ${color[1]}, ${color[2]}, 1);">${cType.length > 40 ? cType.slice(0, 40) + '...' : cType }</div>
+            <div style="width: calc(100% - 160px); background-color: rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5);"></div>
+          </div>`;
+    });
+    $('#sequence-background').html(html);
+    $('#sequence-background').height(55 * chosenTypes.length + 30);
+  }
+
+  // Render the time range layer, and return canonicalized time range.
+  function renderTimeAxis(chooseTypes, startTime, endTime) {
+    var startEpoch = new Date(startTime).getTime() - new Date().getTimezoneOffset() * 60000;
+    var endEpoch = new Date(endTime).getTime() - new Date().getTimezoneOffset() * 60000;
+    startEpoch = Math.floor(startEpoch / 86400000) * 86400000;
+    endEpoch = Math.ceil(endEpoch / 86400000) * 86400000;
+    var days = (endEpoch - startEpoch) / 86400000;
+    var ticks = [];
+    var s = startEpoch, t = endEpoch;
+    if (days <= 5) {
+      for (var i = 0; i <= days; i++) {
+        ticks.push(startEpoch + 86400000 * i);
+      }
+    } else {
+      var moreDays = Math.ceil(days / 5) * 5;
+      startEpoch -= 86400000 * Math.ceil((moreDays - days) / 2);
+      endEpoch += 86400000 * Math.floor((moreDays - days) / 2);
+      for (var i = 0; i <= 5; i++) {
+        ticks.push(startEpoch + 86400000 * i * moreDays / 5);
+      }
+    }
+    var html = '';
+    ticks.map((t, i) => {
+      html += `<div class="timeline" style="height: ${chooseTypes.length * 55 + 5}px;left: calc(180px + (100% - 230px) / ${ticks.length - 1} * ${i});">
+            <div class="timevalue">${new Date(t).toISOString().slice(0, 10)}</div>
+          </div>`;
+    });
+    $('#timerange-layer').html(html);
+    $('#timerange-layer').height(55 * chooseTypes.length + 35);
+    return [s, t];
+  }
+
+  updateCustomTimePicker();
+
+  function runQuery() {
+    // Determine customer id.
+    var customerId = $('#customer-id').val();
+    console.log(customerId);
+    if (customerId.length == 0) {
+      alert('Please input customer id');
+      return;
+    }
+
+    // Collect campaign types that the user has checked.
+    var chooseTypes = [];
+    var campaignTypeInput = campaignTypes.map((_, i) => `#ctype_${i}`);
+    campaignTypeInput.forEach((id, index) => {
+      if ($(id).prop('checked')) {
+        chooseTypes.push(campaignTypes[index]);
+      }
+    });
+    console.log(chooseTypes);
+
+    // Determine the starting and ending time.
+    var startTime = $('#startDate').val();
+    var endTime = $('#endDate').val();
+    if (!$('#dc').prop('checked')) {
+      endTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19).replace('T', ' ');
+      var bias = 0;
+      if ($('#d1').prop('checked')) {
+        bias = 1;
+      } else if ($('#d7').prop('checked')) {
+        bias = 7;
+      } else if ($('#d30').prop('checked')) {
+        bias = 30;
+      } else if ($('#d90').prop('checked')) {
+        bias = 90;
+      } else if ($('#d365').prop('checked')) {
+        bias = 365;
+      }
+      startTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000 - bias * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+    }
+
+    console.log(startTime, endTime);
+    if (startTime >= endTime) {
+      alert('Start time cannot be later than end time.');
+      return;
+    }
+    updateCustomTimePicker();
+
+    var camTypes = '';
+    chooseTypes.forEach(t => camTypes += '&campaignTypes=' + t);
+    // $.get( `query/MyGraph/CustomerJourney?customer=${customerId}&startTime=${startTime}&endTime=${endTime}${camTypes}`, function(data) {
+    //   render(data, chooseTypes, startTime, endTime);
+    // });
+    $.ajax({
+      type: 'GET',
+      url: `query/MyGraph/CustomerJourney?customer=${customerId}&startTime=${startTime}&endTime=${endTime}${camTypes}`,
+      headers: {
+        'Authorization' : 'Bearer 5g1o2a7lnvucb7lbjftelpr2cnj1ulh3'
+      }
+    }).done(function(data) {
+      render(data, chooseTypes, startTime, endTime);
+    });
+  }
+
+  function render(data, chooseTypes, startTime, endTime) {
+    if (data.error) {
+      alert(data.message);
+      return;
+    }
+
+    // Fill in the customer information.
+    var customer = data.results[0]['Customer'][0]['attributes'];
+    var company = data.results[1]['Company'][0]['attributes'];
+    var campaigns = data.results[2]['Campaign'];
+    console.log(customer, company, campaigns);
+    $('#user-name').html(`${customer['FirstName']} ${customer['LastName']}`);
+    $('#job-title').html(customer['Title']);
+    $('#company-name').html(company['Name']);
+    $('#phone-number').html(customer['Phone']);
+    $('#email').html(customer['Email']);
+    $('#lead-source').html(customer['LeadSource']);
+    $('#contact-create-date').html(customer['create_date']);
+    $('#address').html([company['BillingStreet'], company['BillingCity'], company['BillingState'], company['BillingCountry'], company['BillingPostalCode']].filter(a => a.length > 0).join(', '));
+
+    // Render the sequences based on chosen campaign types.
+    renderSequenceBackground(chooseTypes);
+
+    // Render time range.
+    var range = renderTimeAxis(chooseTypes, startTime, endTime);
+
+    // Render the events.
+    var html = '';
+    campaigns.forEach((event, idx) => {
+      var type = event['attributes']['@camType'];
+      var color = sequenceColors[campaignTypes.indexOf(type) % sequenceColors.length];
+      var icon = sequenceIcons[campaignTypes.indexOf(type) % sequenceIcons.length];
+      var left = `calc(165px + (100% - 230px) * (${new Date(event['attributes']['create_date']).getTime() - new Date().getTimezoneOffset() * 60000 - range[0]}) / ${range[1] - range[0]})`;
+      var top = chooseTypes.indexOf(type) * 55 + 44;
+      console.log(left, top);
+      var name1 = event['attributes']['@camName'];
+      var desc1 = event['attributes']['@camDesc'];
+      var id = event['v_id'];
+      var encodedString = btoa(JSON.stringify(event['attributes']));
+      html += `<div id="dt_${idx}" class="vertex" style="background-color: rgb(${color[0]}, ${color[1]}, ${color[2]}); background-image: url('${icon}'); left: ${left}; top: ${top}px;" onmouseover="showTooltip('${name1}', '${desc1}', 'dt_${idx}', ${top}, '${encodedString}')" onmouseout="hideTooltip()">
+      </div>`;
+    });
+    $('#events-layer').html(html);
+    $('#events-layer').height(55 * chooseTypes.length + 35);
+  }
+
+  function showTooltip(name1, desc1, id, top, obj) {
+    var attrs = JSON.parse(atob(obj));
+    var html = 
+      `<div style="display: flex;">
+        <div class="attribute" style="width: 200px;">Name</div><div id="camName" style="width: 300px;">${name1}</div>
+      </div>
+      <div style="display: flex;" id="descLine">
+        <div class="attribute" style="width: 200px;">Description</div><div id="camDesc" style="width: 300px;">${desc1}</div>
+      </div>`;
+
+    Object.keys(attrs)
+      .filter(k => !k.startsWith('@'))
+      .forEach(k => html += `<div style="display: flex;">
+        <div class="attribute" style="width: 200px;">${k}</div><div style="width: 300px;">${attrs[k]}</div>
+      </div>`);
+
+    $('#vertexTooltip').html(html);
+
+
+    // $('#camName').html();
+    // $('#camDesc').html(desc1);
+    // $('#camTime').html(time1.slice(0, 10));
+    // if (desc1.length == 0) {
+    //   $('#descLine').hide();
+    // } else {
+    //   $('#descLine').show();
+    // }
+    $('#vertexTooltip').show();
+    $('#vertexTooltip').css("left", $('#' + id).position().left - $('#vertexTooltip').width() / 2);
+    $('#vertexTooltip').css("top", top - $('#vertexTooltip').height() - 30);
+  }
+
+  function hideTooltip() {
+    $('#vertexTooltip').hide();
+  }
+  $('#vertexTooltip').hide();
+
+</script>
+</html>
