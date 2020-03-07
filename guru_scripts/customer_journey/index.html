@@ -204,7 +204,7 @@ padding: 5px;">
 
   $.ajax({
     type: 'GET',
-    url: 'query/MyGraph/AllCompaigns',
+    url: '/query/MyGraph/AllCompaigns',
     headers: {
       'Authorization' : `Bearer ${token}`
     }
@@ -361,7 +361,7 @@ padding: 5px;">
     // });
     $.ajax({
       type: 'GET',
-      url: `query/MyGraph/CustomerJourney?customer=${customerId}&startTime=${startTime}&endTime=${endTime}${camTypes}`,
+      url: `/query/MyGraph/CustomerJourney?customer=${customerId}&startTime=${startTime}&endTime=${endTime}${camTypes}`,
       headers: {
         'Authorization' : `Bearer ${token}`
       }
